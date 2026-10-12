@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "escra-admin-backend"
+version = "0.1.0"
+description = "Escra Admin Portal Backend - Production-grade admin API with Persona identity management and Escra Indexer"
+authors = ["Escra Team"]
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+motor = "^3.3.2"  # Async MongoDB driver
+pymongo = "^4.6.1"  # MongoDB sync operations
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+httpx = "^0.26.0"  # For Persona API, Algorand indexer calls
+py-algorand-sdk = "^2.7.0"  # Algorand SDK
+cryptography = "^42.0.0"
+structlog = "^24.1.0"  # Structured logging
+python-json-logger = "^2.0.7"
+opentelemetry-api = "^1.22.0"
+opentelemetry-sdk = "^1.22.0"
+opentelemetry-instrumentation-fastapi = "^0.42b0"
+opentelemetry-instrumentation-httpx = "^0.42b0"
+prometheus-client = "^0.19.0"
+python-dotenv = "^1.0.0"
+hvac = "^1.2.1"  # HashiCorp Vault client
+boto3 = "^1.34.34"  # AWS SDK for Secrets Manager
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.3"
+pytest-cov = "^4.1.0"
+black = "^24.1.0"
+ruff = "^0.1.11"
+mypy = "^1.8.0"
+httpx = "^0.26.0"  # For testing
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+

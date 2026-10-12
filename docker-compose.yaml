@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: escra-admin-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE: ${MONGODB_DB_NAME:-escra_admin}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - escra-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: escra-admin-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      SECRET_KEY: ${SECRET_KEY:-changeme-in-production}
+      MONGODB_URL: ${MONGODB_URL:-mongodb://admin:changeme@mongodb:27017/escra_admin?authSource=admin}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-escra_admin}
+      PERSONA_API_KEY: ${PERSONA_API_KEY}
+      PERSONA_WEBHOOK_SECRET: ${PERSONA_WEBHOOK_SECRET}
+      ALGORAND_NETWORK: ${ALGORAND_NETWORK:-testnet}
+      ALGORAND_INDEXER_URL: ${ALGORAND_INDEXER_URL:-https://testnet-idx.algonode.cloud}
+      ALGORAND_NODE_URL: ${ALGORAND_NODE_URL:-https://testnet-api.algonode.cloud}
+      INDEXER_ENABLED: ${INDEXER_ENABLED:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    networks:
+      - escra-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Indexer Worker (for background indexing jobs)
+  # indexer-worker:
+  #   build:
+  #     context: ./backend
+  #     dockerfile: Dockerfile
+  #   container_name: escra-indexer-worker
+  #   restart: unless-stopped
+  #   command: python -m app.indexer.worker
+  #   environment:
+  #     ENVIRONMENT: ${ENVIRONMENT:-development}
+  #     MONGODB_URL: ${MONGODB_URL:-mongodb://admin:changeme@mongodb:27017/escra_admin?authSource=admin}
+  #     ALGORAND_NETWORK: ${ALGORAND_NETWORK:-testnet}
+  #     ALGORAND_INDEXER_URL: ${ALGORAND_INDEXER_URL:-https://testnet-idx.algonode.cloud}
+  #   depends_on:
+  #     - mongodb
+  #     - backend
+  #   networks:
+  #     - escra-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+
+networks:
+  escra-network:
+    driver: bridge
+
